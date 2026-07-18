@@ -1,0 +1,52 @@
+name: Feature request
+description: Propose a focused improvement to PatchScope
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user problem before the implementation. For analyzer, parser, refactor, or API changes, read docs/extending.md first.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is difficult today, and who encounters it?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the smallest complete user-visible result.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Review workflow
+        - Analyzer or rule
+        - Language support
+        - Refactor preview
+        - API or export
+        - Workbench UI
+        - Documentation or onboarding
+        - Packaging or deployment
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety and compatibility
+      description: Note any effect on source execution, network access, persistence, limits, privacy, or public contracts.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I would be willing to help implement or document this change.

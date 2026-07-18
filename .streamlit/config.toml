@@ -1,0 +1,46 @@
+[theme]
+primaryColor = "#1F6F78"
+font = "sans-serif"
+headingFont = "sans-serif"
+codeFont = "monospace"
+baseRadius = "small"
+buttonRadius = "small"
+showWidgetBorder = true
+
+[theme.light]
+backgroundColor = "#F4F6F7"
+secondaryBackgroundColor = "#FFFFFF"
+textColor = "#172126"
+linkColor = "#17626A"
+borderColor = "#CDD5D9"
+
+[theme.dark]
+backgroundColor = "#111719"
+secondaryBackgroundColor = "#1A2327"
+textColor = "#E7ECEE"
+linkColor = "#75C6CE"
+borderColor = "#3A484E"
+
+[theme.light.sidebar]
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6F7"
+textColor = "#172126"
+
+[theme.dark.sidebar]
+backgroundColor = "#151D20"
+secondaryBackgroundColor = "#202A2E"
+textColor = "#E7ECEE"
+
+[server]
+headless = true
+runOnSave = true
+maxUploadSize = 10
+enableXsrfProtection = true
+enableCORS = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+showErrorDetails = "none"
+toolbarMode = "minimal"

@@ -1,0 +1,33 @@
+name: Question
+description: Ask about installation, usage, or extending PatchScope
+title: "[Question]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Read README.md and SUPPORT.md and search existing issues first. Public issues must not contain credentials, private source, or vulnerability details.
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: Include commands and sanitized output when helpful.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: uv checkout on Linux, Python 3.12
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed secrets, private source, and private repository details.
+          required: true

@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="820" viewBox="0 0 1440 820" role="img" aria-labelledby="title desc">
+  <title id="title">PatchScope completed code review</title>
+  <desc id="desc">A faithful illustration of the PatchScope result screen with a decision, four summary metrics, compact filters, prioritized findings, source evidence, and a preview-only refactor.</desc>
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#172126" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .ui { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+      .ink { fill: #172126; }
+      .muted { fill: #607077; }
+      .quiet { fill: #809097; }
+      .small { font-size: 13px; }
+      .label { font-size: 14px; font-weight: 650; }
+      .body { font-size: 15px; }
+      .heading { font-size: 22px; font-weight: 720; }
+      .title { font-size: 29px; font-weight: 760; letter-spacing: -0.02em; }
+      .metric { font-size: 30px; font-weight: 760; }
+    </style>
+  </defs>
+
+  <rect width="1440" height="820" rx="24" fill="#E9EEF0"/>
+  <circle cx="1340" cy="52" r="190" fill="#D7E7E8" opacity="0.85"/>
+  <circle cx="84" cy="786" r="190" fill="#DDE7E8" opacity="0.7"/>
+  <g filter="url(#shadow)">
+    <rect x="40" y="40" width="1360" height="740" rx="16" fill="#F4F6F7" stroke="#C7D1D5"/>
+  </g>
+
+  <g class="ui">
+    <path d="M56 40h1328a16 16 0 0 1 16 16v74H40V56a16 16 0 0 1 16-16z" fill="#FFFFFF"/>
+    <line x1="40" y1="130" x2="1400" y2="130" stroke="#CDD5D9"/>
+    <rect x="72" y="65" width="34" height="34" rx="9" fill="#1F6F78"/>
+    <path d="M81 75h15l-4.5 7 4.5 7H81l4.5-7z" fill="#FFFFFF"/>
+    <text x="122" y="88" class="heading ink">PatchScope</text>
+    <text x="122" y="112" class="small muted">Review code, inspect the evidence, and decide what changes to keep.</text>
+
+    <rect x="72" y="150" width="138" height="34" rx="7" fill="#FFFFFF" stroke="#BFCACE"/>
+    <path d="M91 167h10M91 167l4-4M91 167l4 4" fill="none" stroke="#45565D" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="110" y="172" class="small ink">Back to reviews</text>
+    <rect x="222" y="150" width="142" height="34" rx="7" fill="#FFFFFF" stroke="#BFCACE"/>
+    <path d="M241 167h9M245.5 162.5v9" stroke="#45565D" stroke-width="1.5" stroke-linecap="round"/>
+    <text x="260" y="172" class="small ink">Review another</text>
+
+    <text x="72" y="221" class="title ink">Insecure checkout demo</text>
+    <text x="72" y="247" class="body muted">File</text>
+    <rect x="1286" y="205" width="78" height="27" rx="13.5" fill="#E5F2EC"/>
+    <circle cx="1302" cy="218.5" r="4.5" fill="#26845B"/>
+    <text x="1312" y="223" class="small" fill="#236344">Completed</text>
+
+    <rect x="72" y="267" width="1292" height="48" rx="8" fill="#F4EBC9" stroke="#E2D7A8"/>
+    <text x="92" y="297" class="label" fill="#5D5224">Decision: Request changes</text>
+
+    <g>
+      <rect x="72" y="333" width="305" height="92" rx="10" fill="#FFFFFF" stroke="#CDD5D9"/>
+      <text x="92" y="359" class="small muted">FINDINGS</text>
+      <text x="92" y="401" class="metric ink">8</text>
+
+      <rect x="391" y="333" width="305" height="92" rx="10" fill="#FFFFFF" stroke="#CDD5D9"/>
+      <text x="411" y="359" class="small muted">CRITICAL / HIGH</text>
+      <circle cx="532" cy="354" r="7" fill="#EDF1F2"/>
+      <text x="529.5" y="358" class="small muted">i</text>
+      <text x="411" y="401" class="metric ink">5</text>
+
+      <rect x="710" y="333" width="305" height="92" rx="10" fill="#FFFFFF" stroke="#CDD5D9"/>
+      <text x="730" y="359" class="small muted">FILES REVIEWED</text>
+      <text x="730" y="401" class="metric ink">1</text>
+
+      <rect x="1029" y="333" width="335" height="92" rx="10" fill="#FFFFFF" stroke="#CDD5D9"/>
+      <text x="1049" y="359" class="small muted">RISK SCORE</text>
+      <circle cx="1135" cy="354" r="7" fill="#EDF1F2"/>
+      <text x="1132.5" y="358" class="small muted">i</text>
+      <text x="1049" y="401" class="metric ink">100</text>
+    </g>
+
+    <text x="72" y="464" class="label" fill="#1F6F78">Findings</text>
+    <text x="145" y="464" class="label ink">Code</text>
+    <text x="193" y="464" class="label ink">Report</text>
+    <line x1="72" y1="478" x2="1364" y2="478" stroke="#CDD5D9"/>
+    <line x1="72" y1="478" x2="130" y2="478" stroke="#1F6F78" stroke-width="3"/>
+
+    <rect x="72" y="496" width="1110" height="42" rx="7" fill="#FFFFFF" stroke="#BFCACE"/>
+    <text x="90" y="522" class="small quiet">Issue, file, rule, or analyzer</text>
+    <rect x="1196" y="496" width="168" height="42" rx="7" fill="#FFFFFF" stroke="#BFCACE"/>
+    <path d="M1216 509h14l-5 6v7l-4 2v-9z" fill="none" stroke="#607077" stroke-width="1.5" stroke-linejoin="round"/>
+    <text x="1240" y="522" class="small ink">Filters</text>
+    <path d="M1339 514l5 5 5-5" fill="none" stroke="#607077" stroke-width="1.5" stroke-linecap="round"/>
+
+    <text x="72" y="565" class="small muted">8 of 8 findings</text>
+    <text x="72" y="592" class="label ink">Finding</text>
+
+    <rect x="72" y="607" width="502" height="66" rx="9" fill="#FFFFFF" stroke="#1F6F78" stroke-width="2"/>
+    <circle cx="94" cy="630" r="7" fill="#1F6F78"/>
+    <circle cx="94" cy="630" r="2.5" fill="#FFFFFF"/>
+    <text x="111" y="629" class="label ink">High · Mutable default argument is shared</text>
+    <text x="111" y="651" class="small muted">insecure_checkout.py:10</text>
+    <rect x="72" y="685" width="502" height="58" rx="9" fill="#FFFFFF" stroke="#CDD5D9"/>
+    <circle cx="94" cy="714" r="7" fill="#FFFFFF" stroke="#9EACB2"/>
+    <text x="111" y="710" class="label ink">High · Dynamic execution can run code</text>
+    <text x="111" y="731" class="small muted">insecure_checkout.py:12</text>
+
+    <rect x="598" y="579" width="766" height="164" rx="11" fill="#FFFFFF" stroke="#CDD5D9"/>
+    <text x="622" y="611" class="heading ink">A mutable default argument is shared between calls</text>
+    <rect x="622" y="628" width="44" height="22" rx="11" fill="#FCE8E6"/>
+    <text x="633" y="644" class="small" fill="#8D312B">High</text>
+    <rect x="674" y="628" width="42" height="22" rx="11" fill="#E7EFF8"/>
+    <text x="686" y="644" class="small" fill="#345A7B">Bug</text>
+    <rect x="724" y="628" width="43" height="22" rx="11" fill="#EDF1F2"/>
+    <text x="735" y="644" class="small muted">Open</text>
+    <text x="622" y="675" class="small muted">insecure_checkout.py:10 · exact source evidence</text>
+    <text x="622" y="702" class="label ink">Recommended change</text>
+    <text x="622" y="725" class="body muted">Use None as the default and create the collection inside the function.</text>
+    <rect x="1208" y="693" width="132" height="31" rx="6" fill="#E3EFF0"/>
+    <text x="1225" y="713" class="small" fill="#185C64">Preview only</text>
+  </g>
+</svg>

@@ -1,0 +1,87 @@
+name: Bug report
+description: Report a reproducible PatchScope defect
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Search existing issues first. Never include credentials, proprietary source, private pull-request content, or vulnerability details here. Report security issues privately using SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: PatchScope version
+      description: Provide a release, commit SHA, or output from `patchscope --version`.
+      placeholder: 0.1.0 or commit SHA
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation method
+      options:
+        - uv checkout
+        - Python virtual environment from checkout
+        - Docker Compose
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Operating system and Python version, without environment variables.
+      placeholder: macOS 15, Python 3.12
+    validations:
+      required: true
+  - type: dropdown
+    id: input_kind
+    attributes:
+      label: Input type
+      options:
+        - Pasted code
+        - Source file
+        - ZIP archive
+        - Public GitHub pull request
+        - API or CLI
+        - Startup or installation
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Use synthetic source and the smallest safe reproduction.
+      placeholder: |
+        1. Start PatchScope with ...
+        2. Choose ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the sanitized on-screen error, not raw secrets or private source.
+    validations:
+      required: true
+  - type: textarea
+    id: analyzers
+    attributes:
+      label: Analyzer status
+      description: Paste sanitized output from `patchscope analyzers` when relevant.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Safety check
+      options:
+        - label: I removed secrets, credentials, proprietary source, and private repository content.
+          required: true
+        - label: This is not a vulnerability report.
+          required: true

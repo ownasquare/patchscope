@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --frozen --extra e2e
+      - run: uv lock --check
+      - run: make lint
+      - run: make type
+      - run: make test
+      - run: uv run bandit -q -r src/patchscope
+      - run: uv run pip-audit
+      - run: uv build
+      - run: make package-smoke
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+      - run: uv lock --check
+      - run: docker compose config --quiet
+      - run: docker compose build
+      - run: docker compose up --detach --wait
+      - run: |
+          curl --fail --silent http://127.0.0.1:8787/ready
+          curl --fail --silent http://127.0.0.1:8501/_stcore/health
+      - if: always()
+        run: docker compose down --volumes
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PATCHSCOPE_AI_MODE: offline
+      PATCHSCOPE_API_URL: http://127.0.0.1:8787
+      PATCHSCOPE_DATA_DIR: /tmp/patchscope-e2e
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.17"
+          enable-cache: true
+      - run: uv python install 3.12
+      - run: uv sync --frozen --extra e2e
+      - run: uv run playwright install --with-deps chromium
+      - name: Start local services
+        run: |
+          uv run patchscope serve --host 127.0.0.1 --port 8787 > /tmp/patchscope-api.log 2>&1 &
+          uv run patchscope ui --host 127.0.0.1 --port 8501 > /tmp/patchscope-ui.log 2>&1 &
+          for attempt in {1..45}; do
+            if curl --fail --silent http://127.0.0.1:8787/ready >/dev/null \
+              && curl --fail --silent http://127.0.0.1:8501/_stcore/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          tail -n 100 /tmp/patchscope-api.log
+          tail -n 100 /tmp/patchscope-ui.log
+          exit 1
+      - run: >-
+          uv run pytest -m e2e tests/e2e
+          --browser chromium
+          --tracing retain-on-failure
+          --screenshot only-on-failure
+          --output test-results
+          --base-url http://127.0.0.1:8501
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: patchscope-e2e-artifacts
+          path: |
+            test-results
+            /tmp/patchscope-api.log
+            /tmp/patchscope-ui.log
