@@ -58,6 +58,16 @@ def test_release_artifacts_preserve_streamlit_and_docker_context() -> None:
     assert "COPY --chown=patchscope:patchscope .streamlit ./.streamlit" in dockerfile
 
 
+def test_package_metadata_points_to_the_public_project() -> None:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+
+    assert project["project"]["urls"] == {
+        "Homepage": "https://github.com/ownasquare/patchscope",
+        "Repository": "https://github.com/ownasquare/patchscope",
+        "Issues": "https://github.com/ownasquare/patchscope/issues",
+    }
+
+
 def test_secret_and_runtime_data_are_ignored() -> None:
     gitignore = (ROOT / ".gitignore").read_text()
     for value in (

@@ -6,13 +6,14 @@ Release target: `0.1.0`
 
 ## Outcome
 
-PatchScope is prepared for an initial public open-source release as a local, single-user code review
-workbench. A new contributor can install it from a checkout, start both services with one command,
-run a credential-free example, understand the trust boundary, and follow documented extension
-contracts.
+PatchScope is published at [github.com/ownasquare/patchscope](https://github.com/ownasquare/patchscope)
+as a public, local-first code review workbench. A new contributor can install it from a checkout,
+start both services with one command, run a credential-free example, understand the trust boundary,
+and follow documented extension contracts.
 
-This record describes the repository state. It does not claim that a GitHub release, hosted service,
-private-repository integration, or provider-backed review has been published or validated.
+The public repository and hosted CI are validated. This record does not claim that a tagged GitHub
+release, hosted application, private-repository integration, or provider-backed review has been
+published or validated.
 
 ## Adoption path
 
@@ -34,7 +35,7 @@ without competing with the primary workflow.
 - Contribution, support, security, conduct, issue-template, and pull-request guidance
 - Explicit local-only, credential, source-execution, and preview-only boundaries
 
-## Local verification
+## Verification
 
 | Layer | Result |
 |---|---|
@@ -44,9 +45,11 @@ without competing with the primary workflow.
 | Manual browser review | Core flow checked at desktop and 390 x 844 mobile sizes; no new browser errors after service startup |
 | Local launcher | API and workbench started together on alternate ports and stopped together with Ctrl+C |
 | Container contract | Compose configuration, image build, and in-network API/workbench health checks passed |
+| Hosted CI | Public GitHub Actions passed verification, container, and Playwright E2E jobs on `main` |
 
 ## Remaining publication steps
 
-The repository still needs a personal GitHub remote, hosted CI execution, and an optional `v0.1.0`
-release. Provider-backed synthesis and authenticated GitHub reads remain opt-in integrations; the
-credential-free offline path is the supported first-run experience.
+The repository is public, `main` tracks the personal GitHub remote, and hosted CI has passed. An
+optional tagged `v0.1.0` GitHub release remains. Provider-backed synthesis and authenticated GitHub
+reads remain opt-in integrations; the credential-free offline path is the supported first-run
+experience.
