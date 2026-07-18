@@ -141,3 +141,10 @@ def test_make_verify_includes_lock_build_and_isolated_wheel_smoke() -> None:
     assert "uv run --isolated --no-project --refresh-package patchscope --with" in makefile
     assert "patchscope start --help" in makefile
     assert "- run: make package-smoke" in workflow
+
+
+def test_ci_uses_current_node24_action_releases() -> None:
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+
+    assert workflow.count("actions/checkout@v7.0.0") == 3
+    assert workflow.count("astral-sh/setup-uv@v8.3.2") == 3
