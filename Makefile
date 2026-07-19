@@ -1,4 +1,6 @@
-.PHONY: sync format lint type test audit lock build package-smoke verify dev-api dev-ui demo clean
+LIVE_GITHUB_PR_URL ?= https://github.com/ownasquare/evalforge/pull/1
+
+.PHONY: sync format lint type test test-live audit lock build package-smoke verify dev-api dev-ui demo clean
 
 sync:
 	uv sync --extra e2e
@@ -15,6 +17,9 @@ type:
 
 test:
 	uv run pytest -m "not e2e and not live" --cov=patchscope --cov-branch --cov-report=term-missing
+
+test-live:
+	uv run pytest -q -m live tests/live --live-github-pr-url "$(LIVE_GITHUB_PR_URL)"
 
 audit:
 	uv run bandit -q -r src/patchscope

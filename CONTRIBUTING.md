@@ -48,6 +48,20 @@ make verify
 That gate runs formatting, linting, strict typing, the offline test suite with branch coverage,
 security and dependency audits, lock validation, package builds, and an isolated package smoke test.
 
+Live integration checks are an explicit maintainer opt-in and never run as part of `make verify` or
+normal CI. Put only the credentials you intend to test in an untracked `.env`, then run:
+
+```bash
+make test-live
+```
+
+The GitHub check defaults to the small public pull request at
+`https://github.com/ownasquare/evalforge/pull/1`; override `LIVE_GITHUB_PR_URL` when another public
+fixture is required. Each check skips when its `PATCHSCOPE_GITHUB_TOKEN` or
+`PATCHSCOPE_OPENAI_API_KEY` is missing. A complete live acceptance result is exactly `2 passed`
+with `0 skipped`. See the [live-integration record](docs/validation/2026-07-18-live-integrations.md)
+for the proof boundary.
+
 Browser E2E is separate. With `patchscope start` running in another terminal, use:
 
 ```bash

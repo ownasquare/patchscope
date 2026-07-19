@@ -41,12 +41,24 @@ without competing with the primary workflow.
 | Layer | Result |
 |---|---|
 | Release gate | Ruff, strict mypy, offline tests, Bandit, dependency audit, lock check, build, and wheel-only launcher smoke passed |
-| Automated tests | 280 passed, 2 opt-in tests deselected; 89.32% branch coverage |
+| Automated tests | 281 passed, 4 separately opted-in tests deselected; 89.32% branch coverage |
 | Browser E2E | 2 Playwright tests passed for review, refactor, triage, history readback, and mobile overflow |
 | Manual browser review | Core flow checked at desktop and 390 x 844 mobile sizes; no new browser errors after service startup |
 | Local launcher | API and workbench started together on alternate ports and stopped together with Ctrl+C |
 | Container contract | Compose configuration, image build, and in-network API/workbench health checks passed |
 | Hosted CI | Public GitHub Actions passed verification, container, and Playwright E2E jobs on `main` |
+| Optional live integrations | Authenticated GitHub passed; OpenAI remains pending; full acceptance requires exactly 2 passed and 0 skipped |
+
+## Live-integration follow-up
+
+`make verify` and normal CI remain offline and credential-free. Maintainers can opt into
+`make test-live`, which uses `https://github.com/ownasquare/evalforge/pull/1` as its bounded GitHub
+fixture. Both configured GitHub CLI accounts, `ownasquare` and `beladed-sites`, validated, so no
+credential repair is needed. PatchScope's authenticated GitHub test also passed against the bounded
+fixture with the active credential held only in the child process environment. OpenAI acceptance
+remains pending because no
+`PATCHSCOPE_OPENAI_API_KEY` is available. See the
+[live-integration acceptance record](../validation/2026-07-18-live-integrations.md).
 
 ## Publication state
 

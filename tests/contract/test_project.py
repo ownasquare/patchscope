@@ -27,6 +27,7 @@ def test_public_project_files_are_present() -> None:
         "docs/extending.md",
         "docs/releases/v0.1.0.md",
         "docs/security.md",
+        "docs/validation/2026-07-18-live-integrations.md",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
         ".github/ISSUE_TEMPLATE/feature_request.yml",
         ".github/ISSUE_TEMPLATE/question.yml",
@@ -54,6 +55,7 @@ def test_release_artifacts_preserve_streamlit_and_docker_context() -> None:
         "/docs/extending.md",
         "/docs/releases",
         "/docs/security.md",
+        "/docs/validation",
     } <= sdist_includes
 
     dockerfile = (ROOT / "Dockerfile").read_text()
@@ -81,7 +83,7 @@ def test_secret_and_runtime_data_are_ignored() -> None:
         "docs/superpowers/",
     ):
         assert value in gitignore
-    assert not (ROOT / ".env").exists()
+    assert "!.env" not in gitignore.splitlines()
 
 
 def test_environment_example_contains_only_consumed_server_settings() -> None:
@@ -132,6 +134,15 @@ def test_default_pytest_run_excludes_live_and_e2e_suites() -> None:
 
     assert "not e2e" in addopts
     assert "not live" in addopts
+
+
+def test_live_acceptance_is_explicit_and_absent_from_ci() -> None:
+    makefile = (ROOT / "Makefile").read_text()
+    workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+
+    assert "test-live:" in makefile
+    assert "uv run pytest -q -m live tests/live --live-github-pr-url" in makefile
+    assert "test-live" not in workflow
 
 
 def test_make_verify_includes_lock_build_and_isolated_wheel_smoke() -> None:

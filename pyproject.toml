@@ -85,6 +85,7 @@ include = [
   "/docs/extending.md",
   "/docs/releases",
   "/docs/security.md",
+  "/docs/validation",
   "/.dockerignore",
   "/.env.example",
   "/.python-version",
