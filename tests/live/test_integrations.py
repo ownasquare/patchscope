@@ -35,10 +35,10 @@ STATIC_SENTINEL = {
 
 def _required_secret(value: SecretStr | None, name: str) -> str:
     if value is None:
-        pytest.skip(f"{name} is not configured")
+        pytest.fail(f"{name} is required for opted-in live acceptance")
     secret = value.get_secret_value().strip()
     if not secret:
-        pytest.skip(f"{name} is not configured")
+        pytest.fail(f"{name} is required for opted-in live acceptance")
     return secret
 
 
@@ -49,7 +49,7 @@ def test_openai_synthesis_returns_evidence_bounded_structured_output() -> None:
         mode="openai",
         model_name=settings.openai_model,
         api_key=api_key,
-        max_source_chars=4_096,
+        max_prompt_chars=4_096,
     )
 
     findings, metadata, warnings = synthesizer.synthesize(

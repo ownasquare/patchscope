@@ -125,6 +125,7 @@ class GitHubClient:
             )
             if not isinstance(metadata, dict):
                 raise GitHubError("GitHub returned an invalid pull request response")
+            _require_public_repository(metadata)
             changed_files = _as_nonnegative_int(metadata.get("changed_files"))
             if changed_files > self._max_files:
                 raise IntakeError(
@@ -311,6 +312,18 @@ class GitHubClient:
 def _safe_repo_path(path: str) -> bool:
     candidate = PurePosixPath(path)
     return bool(path) and not candidate.is_absolute() and ".." not in candidate.parts
+
+
+def _require_public_repository(metadata: Mapping[str, Any]) -> None:
+    raw_base = metadata.get("base")
+    base: Mapping[str, Any] = raw_base if isinstance(raw_base, dict) else {}
+    raw_repository = base.get("repo")
+    repository: Mapping[str, Any] = raw_repository if isinstance(raw_repository, dict) else {}
+    visibility = repository.get("visibility")
+    if repository.get("private") is not False or (
+        visibility is not None and visibility != "public"
+    ):
+        raise IntakeError("PatchScope accepts pull requests from public GitHub repositories only")
 
 
 def _as_nonnegative_int(value: object) -> int:

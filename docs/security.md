@@ -18,6 +18,10 @@ PatchScope reads source as data. It does not import Python files, evaluate JavaS
 
 GitHub input is parsed into owner, repository, and integer PR number. PatchScope does not fetch the submitted URL. It calls only fixed `https://api.github.com/repos/...` paths with redirects disabled, short timeouts, bounded retries, and response caps. Tokens stay server-side.
 
+Pull-request metadata must identify the base repository as public before PatchScope requests a file
+list or source content. Private or ambiguous visibility fails closed, including when an otherwise
+valid server-side token could read the repository.
+
 ## Analyzer controls
 
 - Analyzer subprocesses receive fixed argument arrays with `shell=False`; user source never
@@ -38,11 +42,19 @@ These controls reduce risk but are not a kernel sandbox. A production service th
 
 ## AI controls
 
-Provider use is optional. API keys are server-only secret settings. Source sent to a provider is bounded. Structured model output is validated against known paths, valid line ranges, and exact source evidence. Model output cannot erase deterministic findings or claim source execution. Provider errors in `auto` mode are recorded as fallback metadata.
+Provider use is optional. API keys are server-only secret settings. One configured character ceiling
+bounds the complete provider prompt, and a separate token ceiling bounds completion output.
+Deterministic prompt truncation is disclosed without removing local static findings. Structured
+model output is validated against known paths, valid line ranges, and exact source evidence. Model
+output cannot erase deterministic findings or claim source execution. Provider errors in `auto`
+mode are recorded as fallback metadata.
 
 ## Storage and privacy
 
-The default SQLite database stores source snapshots to support evidence readback and history. Treat `.data/patchscope.db` as sensitive. It is ignored by Git, stored in a named Docker volume, and should be encrypted or moved to an approved database for shared deployments. PatchScope performs no telemetry by default.
+The default SQLite database stores source snapshots to support evidence readback and history. Treat `.data/patchscope.db` as sensitive. It is ignored by Git, stored in a named Docker volume, and should be encrypted or moved to an approved database for shared deployments. PatchScope performs no telemetry by default: LangSmith tracing is disabled around the review graph, and launcher child processes receive only bounded PatchScope and runtime environment keys.
+
+The default pytest suite also disables socket access. Only the separately opted-in live and
+Playwright E2E commands re-enable sockets explicitly.
 
 ## Deployment boundary
 

@@ -110,6 +110,17 @@ def test_ui_uses_literal_subprocess_arguments_and_propagates_exit_code(
 
     monkeypatch.setenv("PATCHSCOPE_OPENAI_API_KEY", "api-only")
     monkeypatch.setenv("PATCHSCOPE_GITHUB_TOKEN", "api-only")
+    monkeypatch.setenv("PATCHSCOPE_API_URL", "http://127.0.0.1:9999")
+    monkeypatch.setenv("PATCHSCOPE_UNRELATED_SECRET", "not-a-setting")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "unrelated-secret")
+    monkeypatch.setenv("LANGSMITH_TRACING", "true")
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "true")
+    monkeypatch.setenv("PATH", "/safe/analyzer/bin")
+    monkeypatch.setenv("LANG", "en_US.UTF-8")
+    monkeypatch.setenv("TMPDIR", "/safe/tmp")
+    monkeypatch.setenv("SSL_CERT_FILE", "/safe/cert.pem")
+    monkeypatch.setenv("VIRTUAL_ENV", "/safe/venv")
+    monkeypatch.setenv("HOME", "/safe/home")
     monkeypatch.setattr("patchscope.cli.subprocess.run", fake_run)
 
     result = runner.invoke(app, ["ui", "--host", "127.0.0.2", "--port", "8600"])
@@ -134,6 +145,17 @@ def test_ui_uses_literal_subprocess_arguments_and_propagates_exit_code(
     ]
     assert "PATCHSCOPE_OPENAI_API_KEY" not in environments[0]
     assert "PATCHSCOPE_GITHUB_TOKEN" not in environments[0]
+    assert "PATCHSCOPE_UNRELATED_SECRET" not in environments[0]
+    assert "AWS_SECRET_ACCESS_KEY" not in environments[0]
+    assert "LANGSMITH_TRACING" not in environments[0]
+    assert "LANGCHAIN_TRACING_V2" not in environments[0]
+    assert environments[0]["PATCHSCOPE_API_URL"] == "http://127.0.0.1:9999"
+    assert environments[0]["PATH"] == "/safe/analyzer/bin"
+    assert environments[0]["LANG"] == "en_US.UTF-8"
+    assert environments[0]["TMPDIR"] == "/safe/tmp"
+    assert environments[0]["SSL_CERT_FILE"] == "/safe/cert.pem"
+    assert environments[0]["VIRTUAL_ENV"] == "/safe/venv"
+    assert environments[0]["HOME"] == "/safe/home"
 
 
 class FakeChildProcess:
@@ -174,6 +196,19 @@ def test_start_launches_both_services_with_fixed_arguments_and_isolates_ui_secre
 
     monkeypatch.setenv("PATCHSCOPE_OPENAI_API_KEY", "api-only")
     monkeypatch.setenv("PATCHSCOPE_GITHUB_TOKEN", "api-only")
+    monkeypatch.setenv("PATCHSCOPE_AI_MODE", "openai")
+    monkeypatch.setenv("PATCHSCOPE_MAX_FILES", "12")
+    monkeypatch.setenv("PATCHSCOPE_UNRELATED_SECRET", "not-a-setting")
+    monkeypatch.setenv("DATABASE_URL", "unrelated-database-secret")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "unrelated-secret")
+    monkeypatch.setenv("LANGSMITH_TRACING", "true")
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "true")
+    monkeypatch.setenv("PATH", "/safe/analyzer/bin")
+    monkeypatch.setenv("LANG", "en_US.UTF-8")
+    monkeypatch.setenv("TMPDIR", "/safe/tmp")
+    monkeypatch.setenv("SSL_CERT_FILE", "/safe/cert.pem")
+    monkeypatch.setenv("VIRTUAL_ENV", "/safe/venv")
+    monkeypatch.setenv("HOME", "/safe/home")
     monkeypatch.setattr("patchscope.cli.subprocess.Popen", fake_popen)
 
     result = runner.invoke(
@@ -208,9 +243,31 @@ def test_start_launches_both_services_with_fixed_arguments_and_isolates_ui_secre
         "false",
     ]
     assert launches[0][1]["PATCHSCOPE_OPENAI_API_KEY"] == "api-only"
+    assert launches[0][1]["PATCHSCOPE_GITHUB_TOKEN"] == "api-only"
+    assert launches[0][1]["PATCHSCOPE_AI_MODE"] == "openai"
+    assert launches[0][1]["PATCHSCOPE_MAX_FILES"] == "12"
+    assert "PATCHSCOPE_UNRELATED_SECRET" not in launches[0][1]
+    assert "DATABASE_URL" not in launches[0][1]
+    assert "AWS_SECRET_ACCESS_KEY" not in launches[0][1]
+    assert "LANGSMITH_TRACING" not in launches[0][1]
+    assert "LANGCHAIN_TRACING_V2" not in launches[0][1]
     assert "PATCHSCOPE_OPENAI_API_KEY" not in launches[1][1]
     assert "PATCHSCOPE_GITHUB_TOKEN" not in launches[1][1]
+    assert "PATCHSCOPE_AI_MODE" not in launches[1][1]
+    assert "PATCHSCOPE_MAX_FILES" not in launches[1][1]
+    assert "PATCHSCOPE_UNRELATED_SECRET" not in launches[1][1]
+    assert "DATABASE_URL" not in launches[1][1]
+    assert "AWS_SECRET_ACCESS_KEY" not in launches[1][1]
+    assert "LANGSMITH_TRACING" not in launches[1][1]
+    assert "LANGCHAIN_TRACING_V2" not in launches[1][1]
     assert launches[1][1]["PATCHSCOPE_API_URL"] == "http://127.0.0.2:9000"
+    for environment in (launches[0][1], launches[1][1]):
+        assert environment["PATH"] == "/safe/analyzer/bin"
+        assert environment["LANG"] == "en_US.UTF-8"
+        assert environment["TMPDIR"] == "/safe/tmp"
+        assert environment["SSL_CERT_FILE"] == "/safe/cert.pem"
+        assert environment["VIRTUAL_ENV"] == "/safe/venv"
+        assert environment["HOME"] == "/safe/home"
     assert ui.terminated is True
     assert ui.wait_calls == [5.0]
     assert os.environ["PATCHSCOPE_OPENAI_API_KEY"] == "api-only"

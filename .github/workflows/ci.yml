@@ -79,6 +79,7 @@ jobs:
           exit 1
       - run: >-
           uv run pytest -m e2e tests/e2e
+          --force-enable-socket
           --browser chromium
           --tracing retain-on-failure
           --screenshot only-on-failure

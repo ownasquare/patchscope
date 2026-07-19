@@ -1,4 +1,6 @@
 LIVE_GITHUB_PR_URL ?= https://github.com/ownasquare/evalforge/pull/1
+PACKAGE_VERSION := $(shell uv version --short)
+PACKAGE_WHEEL := ./dist/patchscope-$(PACKAGE_VERSION)-py3-none-any.whl
 
 .PHONY: sync format lint type test test-live audit lock build package-smoke verify dev-api dev-ui demo clean
 
@@ -19,7 +21,7 @@ test:
 	uv run pytest -m "not e2e and not live" --cov=patchscope --cov-branch --cov-report=term-missing
 
 test-live:
-	uv run pytest -q -m live tests/live --live-github-pr-url "$(LIVE_GITHUB_PR_URL)"
+	uv run pytest -q -m live tests/live --force-enable-socket --live-github-pr-url "$(LIVE_GITHUB_PR_URL)"
 
 audit:
 	uv run bandit -q -r src/patchscope
@@ -31,8 +33,8 @@ lock:
 build:
 	uv build
 
-package-smoke:
-	uv run --isolated --no-project --refresh-package patchscope --with ./dist/patchscope-0.1.0-py3-none-any.whl patchscope start --help
+package-smoke: build
+	uv run --isolated --no-project --refresh-package patchscope --with $(PACKAGE_WHEEL) patchscope start --help
 
 verify: lint type test audit lock build package-smoke
 

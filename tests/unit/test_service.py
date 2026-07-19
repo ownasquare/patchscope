@@ -329,7 +329,110 @@ def test_result_conversion_defaults_invalid_findings_and_attaches_refactor() -> 
     assert finding.category.value == "maintainability"
     assert finding.severity.value == "info"
     assert finding.refactor_diff == "--- a/demo.py\n+++ b/demo.py"
-    assert result.ai_metadata.fallback_reason == "offline"
+    assert result.ai_metadata.fallback_reason is None
+    assert result.ai_metadata.warnings == ("offline",)
+
+
+def test_result_conversion_keeps_truncation_separate_from_provider_fallback() -> None:
+    result = _result_from_state(
+        {
+            "findings": [],
+            "analyzer_runs": [],
+            "stage_trace": ["synthesize"],
+            "warnings": [
+                "Provider prompt was truncated; complete local static findings were preserved.",
+                "AI synthesis was unavailable (TimeoutError); deterministic findings were "
+                "preserved.",
+            ],
+            "ai_metadata": {
+                "mode": "offline_fallback",
+                "provider": "openai",
+                "model": "gpt-5-mini",
+                "summary": "Static findings remain authoritative.",
+                "finding_count": 4,
+                "accepted_model_findings": 0,
+                "source_execution": False,
+                "fallback_reason": "AI synthesis was unavailable (TimeoutError).",
+                "provider_error_type": "TimeoutError",
+                "completion_token_limit": 4_096,
+                "prompt_char_limit": 4_000,
+                "prompt_chars": 4_000,
+                "prompt_truncated": True,
+                "prompt_sections": {
+                    "metadata": {
+                        "original_chars": 8_000,
+                        "included_chars": 200,
+                        "prompt_chars": 215,
+                        "truncated": True,
+                    },
+                    "sources": {
+                        "original_chars": 20_000,
+                        "included_chars": 2_000,
+                        "prompt_chars": 2_015,
+                        "truncated": True,
+                    },
+                },
+            },
+        }
+    )
+
+    metadata = result.ai_metadata
+    assert metadata.mode == "offline_fallback"
+    assert metadata.provider == "openai"
+    assert metadata.model == "gpt-5-mini"
+    assert metadata.finding_count == 4
+    assert metadata.provider_error_type == "TimeoutError"
+    assert metadata.completion_token_limit == 4_096
+    assert metadata.fallback_reason == "AI synthesis was unavailable (TimeoutError)."
+    assert metadata.prompt_truncated is True
+    assert metadata.prompt_sections["sources"].included_chars == 2_000
+    assert metadata.warnings[0].startswith("Provider prompt was truncated")
+
+
+def test_review_service_persists_successful_provider_metadata(tmp_path: Path) -> None:
+    class ProviderMetadataWorkflow(CaptureWorkflow):
+        def invoke(self, *, files: list[object], metadata: dict[str, object]) -> dict[str, object]:
+            self.calls.append({"files": files, "metadata": metadata})
+            return {
+                "findings": [],
+                "analyzer_runs": [],
+                "stage_trace": ["parse", "analyze", "synthesize", "refactor", "score"],
+                "warnings": ["Provider prompt was truncated."],
+                "ai_metadata": {
+                    "mode": "openai",
+                    "provider": "openai",
+                    "model": "gpt-5-mini",
+                    "summary": "No additional issues.",
+                    "finding_count": 0,
+                    "accepted_model_findings": 0,
+                    "completion_token_limit": 4_096,
+                    "prompt_char_limit": 4_000,
+                    "prompt_chars": 3_999,
+                    "prompt_truncated": True,
+                    "prompt_sections": {
+                        "sources": {
+                            "original_chars": 9_000,
+                            "included_chars": 2_000,
+                            "prompt_chars": 2_015,
+                            "truncated": True,
+                        }
+                    },
+                },
+            }
+
+    service = _make_service(tmp_path, workflow=ProviderMetadataWorkflow())
+    try:
+        review = service.review_text(filename="safe.py", content="pass\n")
+
+        assert review.ai_metadata.mode == "openai"
+        assert review.ai_metadata.summary == "No additional issues."
+        assert review.ai_metadata.completion_token_limit == 4_096
+        assert review.ai_metadata.prompt_chars == 3_999
+        assert review.ai_metadata.prompt_truncated is True
+        assert review.ai_metadata.fallback_reason is None
+        assert review.ai_metadata.warnings == ("Provider prompt was truncated.",)
+    finally:
+        service.close()
 
 
 @dataclass

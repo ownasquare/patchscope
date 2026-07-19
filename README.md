@@ -111,7 +111,9 @@ opt into provider-backed synthesis. Launcher addresses and ports are explicit co
 | `openai` | Requires a server-side key and fails explicitly when synthesis cannot run |
 
 Provider output cannot erase deterministic findings and must match submitted paths, line ranges,
-and exact source evidence. Keys belong only on the API process; the browser client never needs
+and exact source evidence. Provider context is capped at 120,000 characters and completion output
+at 4,096 tokens by default; any context truncation is labeled and never removes local static
+findings from the final review. Keys belong only on the API process; the browser client never needs
 them.
 
 Semgrep is also optional and isolated from the application environment:
@@ -125,14 +127,15 @@ Use `patchscope analyzers` to see which analysis layers are available.
 ## Data, privacy, and deployment boundary
 
 - SQLite review history is stored in `.data/patchscope.db` by default. Treat it as sensitive because
-  it contains submitted source snapshots.
+  it contains submitted source snapshots. Optional checkout-only PostgreSQL setup and its limits
+  are documented in [the architecture guide](docs/architecture.md#optional-postgresql-storage).
 - PatchScope performs no telemetry by default.
 - Imported source, tests, hooks, plugins, builds, and package managers are never executed.
 - Public pull requests work without a token. `PATCHSCOPE_GITHUB_TOKEN` is an optional server-side
   credential for authenticated GitHub reads; private-repository behavior is not part of the
   supported or validated `0.1.x` contract.
 - The included server and Compose stack are local, single-user references. They are not hardened
-  public multi-user hosting configurations.
+  public multi-user hosting configurations; the reference Compose image uses SQLite.
 
 Read [the security design](docs/security.md) before processing sensitive code or adapting
 PatchScope for shared infrastructure.

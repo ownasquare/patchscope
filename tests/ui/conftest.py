@@ -108,7 +108,7 @@ class FakeUiClient:
 
     def capabilities(self) -> dict[str, Any]:
         return {
-            "version": "0.1.0",
+            "version": "0.1.1",
             "ai_mode": "offline",
             "source_execution": False,
             "analyzers": [

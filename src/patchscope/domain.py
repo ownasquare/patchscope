@@ -264,11 +264,53 @@ class AnalyzerRun(DomainModel):
         return self
 
 
+class PromptSectionUsage(DomainModel):
+    original_chars: int = Field(ge=0)
+    included_chars: int = Field(ge=0)
+    prompt_chars: int = Field(ge=0)
+    truncated: bool = False
+
+    @model_validator(mode="after")
+    def validate_counts(self) -> Self:
+        if self.included_chars > self.original_chars:
+            raise ValueError("included_chars cannot exceed original_chars")
+        if self.prompt_chars < self.included_chars:
+            raise ValueError("prompt_chars cannot be smaller than included_chars")
+        if self.truncated != (self.included_chars < self.original_chars):
+            raise ValueError("truncated must match the section character counts")
+        return self
+
+
 class AIMetadata(DomainModel):
-    mode: Literal["offline", "openai"] = "offline"
-    provider: str | None = None
-    model: str | None = None
+    mode: Literal["offline", "openai", "offline_fallback"] = "offline"
+    provider: str | None = Field(default=None, max_length=160)
+    model: str | None = Field(default=None, max_length=160)
+    summary: str | None = Field(default=None, max_length=2_000)
+    finding_count: int = Field(default=0, ge=0)
+    accepted_model_findings: int = Field(default=0, ge=0)
+    source_execution: Literal[False] = False
     fallback_reason: str | None = Field(default=None, max_length=2_000)
+    provider_error_type: str | None = Field(default=None, max_length=160)
+    completion_token_limit: int | None = Field(default=None, ge=256, le=16_384)
+    prompt_char_limit: int | None = Field(default=None, ge=4_000, le=1_000_000)
+    prompt_chars: int | None = Field(default=None, ge=0, le=1_000_000)
+    prompt_truncated: bool = False
+    prompt_sections: dict[str, PromptSectionUsage] = Field(default_factory=dict)
+    warnings: tuple[str, ...] = Field(default_factory=tuple, max_length=20)
+
+    @model_validator(mode="after")
+    def validate_prompt_counts(self) -> Self:
+        if (
+            self.prompt_char_limit is not None
+            and self.prompt_chars is not None
+            and self.prompt_chars > self.prompt_char_limit
+        ):
+            raise ValueError("prompt_chars cannot exceed prompt_char_limit")
+        if self.prompt_truncated != any(
+            section.truncated for section in self.prompt_sections.values()
+        ):
+            raise ValueError("prompt_truncated must match prompt section usage")
+        return self
 
 
 _ACTIVE_TRIAGE = {FindingTriage.OPEN, FindingTriage.ACKNOWLEDGED}
@@ -409,6 +451,7 @@ __all__ = [
     "FindingSeverity",
     "FindingTriage",
     "MergeRecommendation",
+    "PromptSectionUsage",
     "ReviewDetail",
     "ReviewListItem",
     "ReviewPage",

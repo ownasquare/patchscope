@@ -23,6 +23,7 @@ from patchscope.domain import (
     FindingCategory,
     FindingSeverity,
     FindingTriage,
+    PromptSectionUsage,
     ReviewDetail,
     ReviewPage,
     ReviewRequest,
@@ -367,13 +368,67 @@ def _result_from_state(state: Mapping[str, Any]) -> ReviewResult:
     raw_ai_value = state.get("ai_metadata")
     raw_ai: Mapping[str, Any] = raw_ai_value if isinstance(raw_ai_value, Mapping) else {}
     raw_mode = str(raw_ai.get("mode", "offline"))
+    mode = raw_mode if raw_mode in {"openai", "offline_fallback"} else "offline"
+    prompt_sections: dict[str, PromptSectionUsage] = {}
+    raw_sections = raw_ai.get("prompt_sections")
+    if isinstance(raw_sections, Mapping):
+        for raw_name, raw_usage in raw_sections.items():
+            if not isinstance(raw_usage, Mapping):
+                continue
+            original_chars = _optional_nonnegative_int(raw_usage.get("original_chars"))
+            included_chars = _optional_nonnegative_int(raw_usage.get("included_chars"))
+            prompt_section_chars = _optional_nonnegative_int(raw_usage.get("prompt_chars"))
+            if original_chars is None or included_chars is None or prompt_section_chars is None:
+                continue
+            try:
+                prompt_sections[str(raw_name)] = PromptSectionUsage(
+                    original_chars=original_chars,
+                    included_chars=included_chars,
+                    prompt_chars=prompt_section_chars,
+                    truncated=included_chars < original_chars,
+                )
+            except ValueError:
+                continue
+    prompt_char_limit = _optional_bounded_int(raw_ai.get("prompt_char_limit"), 4_000, 1_000_000)
+    prompt_chars = _optional_bounded_int(raw_ai.get("prompt_chars"), 0, 1_000_000)
+    if (
+        prompt_char_limit is not None
+        and prompt_chars is not None
+        and prompt_chars > prompt_char_limit
+    ):
+        prompt_chars = None
+    raw_warnings = state.get("warnings", [])
+    warning_values = (
+        raw_warnings
+        if isinstance(raw_warnings, Sequence) and not isinstance(raw_warnings, (str, bytes))
+        else []
+    )
+    warnings = tuple(str(item)[:2_000] for item in warning_values[:20] if str(item))
     ai_metadata = AIMetadata(
-        mode="openai" if raw_mode == "openai" else "offline",
-        provider=str(raw_ai.get("provider")) if raw_ai.get("provider") else None,
-        model=str(raw_ai.get("model")) if raw_ai.get("model") else None,
-        fallback_reason=(
-            "; ".join(str(item) for item in state.get("warnings", []))[:2_000] or None
+        mode=mode,
+        provider=str(raw_ai.get("provider"))[:160] if raw_ai.get("provider") else None,
+        model=str(raw_ai.get("model"))[:160] if raw_ai.get("model") else None,
+        summary=str(raw_ai.get("summary"))[:2_000] if raw_ai.get("summary") else None,
+        finding_count=_optional_nonnegative_int(raw_ai.get("finding_count")) or 0,
+        accepted_model_findings=(
+            _optional_nonnegative_int(raw_ai.get("accepted_model_findings")) or 0
         ),
+        fallback_reason=(
+            str(raw_ai.get("fallback_reason"))[:2_000] if raw_ai.get("fallback_reason") else None
+        ),
+        provider_error_type=(
+            str(raw_ai.get("provider_error_type"))[:160]
+            if raw_ai.get("provider_error_type")
+            else None
+        ),
+        completion_token_limit=_optional_bounded_int(
+            raw_ai.get("completion_token_limit"), 256, 16_384
+        ),
+        prompt_char_limit=prompt_char_limit,
+        prompt_chars=prompt_chars,
+        prompt_truncated=any(section.truncated for section in prompt_sections.values()),
+        prompt_sections=prompt_sections,
+        warnings=warnings,
     )
     return ReviewResult(
         findings=findings,
@@ -434,6 +489,19 @@ def _positive_int(value: object, default: int) -> int:
     return (
         value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else default
     )
+
+
+def _optional_nonnegative_int(value: object) -> int | None:
+    if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+        return value
+    return None
+
+
+def _optional_bounded_int(value: object, minimum: int, maximum: int) -> int | None:
+    candidate = _optional_nonnegative_int(value)
+    if candidate is not None and minimum <= candidate <= maximum:
+        return candidate
+    return None
 
 
 def _optional_positive_int(value: object) -> int | None:

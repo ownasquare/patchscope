@@ -153,6 +153,7 @@ uv run playwright install chromium
 uv run patchscope start
 # In another terminal:
 uv run pytest -m e2e tests/e2e \
+  --force-enable-socket \
   --browser chromium \
   --base-url http://127.0.0.1:8501
 ```

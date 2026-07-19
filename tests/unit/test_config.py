@@ -14,6 +14,8 @@ def test_settings_default_to_local_sqlite(tmp_path: Path, monkeypatch: pytest.Mo
     assert settings.database_url.startswith("sqlite+pysqlite:///")
     assert settings.database_url.endswith("patchscope.db")
     assert settings.ai_mode == "auto"
+    assert settings.openai_max_prompt_chars == 120_000
+    assert settings.openai_max_completion_tokens == 4_096
     assert settings.max_file_bytes == 500_000
     assert settings.max_review_bytes == 2_000_000
     assert settings.data_dir == tmp_path
@@ -57,3 +59,35 @@ def test_settings_reject_non_positive_resource_limits(field: str, value: int) ->
 def test_settings_reject_file_limit_larger_than_review_limit() -> None:
     with pytest.raises(ValidationError, match="max_file_bytes"):
         Settings(max_file_bytes=20, max_review_bytes=10, _env_file=None)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("openai_max_prompt_chars", 3_999),
+        ("openai_max_prompt_chars", 1_000_001),
+        ("openai_max_completion_tokens", 255),
+        ("openai_max_completion_tokens", 16_385),
+    ],
+)
+def test_settings_reject_provider_budgets_outside_safe_ranges(field: str, value: int) -> None:
+    with pytest.raises(ValidationError):
+        Settings(**{field: value}, _env_file=None)
+
+
+@pytest.mark.parametrize(
+    ("prompt_chars", "completion_tokens"),
+    [(4_000, 256), (1_000_000, 16_384)],
+)
+def test_settings_accept_provider_budget_boundaries(
+    prompt_chars: int,
+    completion_tokens: int,
+) -> None:
+    settings = Settings(
+        openai_max_prompt_chars=prompt_chars,
+        openai_max_completion_tokens=completion_tokens,
+        _env_file=None,
+    )
+
+    assert settings.openai_max_prompt_chars == prompt_chars
+    assert settings.openai_max_completion_tokens == completion_tokens

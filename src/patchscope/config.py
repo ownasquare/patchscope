@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     ai_mode: Literal["auto", "offline", "openai"] = "auto"
     openai_model: str = "gpt-5-mini"
     openai_api_key: SecretStr | None = None
+    openai_max_prompt_chars: int = Field(default=120_000, ge=4_000, le=1_000_000)
+    openai_max_completion_tokens: int = Field(default=4_096, ge=256, le=16_384)
     github_token: SecretStr | None = None
 
     max_file_bytes: int = Field(default=500_000, gt=0)

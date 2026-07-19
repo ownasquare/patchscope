@@ -26,6 +26,7 @@ def test_public_project_files_are_present() -> None:
         "docs/assets/patchscope-workbench.svg",
         "docs/extending.md",
         "docs/releases/v0.1.0.md",
+        "docs/releases/v0.1.1.md",
         "docs/security.md",
         "docs/validation/2026-07-18-live-integrations.md",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
@@ -70,6 +71,14 @@ def test_package_metadata_points_to_the_public_project() -> None:
         "Repository": "https://github.com/ownasquare/patchscope",
         "Issues": "https://github.com/ownasquare/patchscope/issues",
     }
+
+
+def test_source_checkout_version_fallback_matches_project_metadata() -> None:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    package_init = (ROOT / "src/patchscope/__init__.py").read_text()
+    expected_version = project["project"]["version"]
+
+    assert f'__version__ = "{expected_version}"' in package_init
 
 
 def test_secret_and_runtime_data_are_ignored() -> None:
@@ -134,15 +143,24 @@ def test_default_pytest_run_excludes_live_and_e2e_suites() -> None:
 
     assert "not e2e" in addopts
     assert "not live" in addopts
+    assert "--disable-socket" in addopts
+    assert "--allow-unix-socket" in addopts
 
 
 def test_live_acceptance_is_explicit_and_absent_from_ci() -> None:
     makefile = (ROOT / "Makefile").read_text()
     workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+    live_tests = (ROOT / "tests/live/test_integrations.py").read_text()
 
     assert "test-live:" in makefile
-    assert "uv run pytest -q -m live tests/live --live-github-pr-url" in makefile
+    assert "uv run pytest -q -m live tests/live" in makefile
+    assert "--live-github-pr-url" in makefile
+    assert "--force-enable-socket" in makefile
     assert "test-live" not in workflow
+    assert "uv run pytest -m e2e tests/e2e" in workflow
+    assert "--force-enable-socket" in workflow
+    assert "pytest.skip" not in live_tests
+    assert "is required for opted-in live acceptance" in live_tests
 
 
 def test_make_verify_includes_lock_build_and_isolated_wheel_smoke() -> None:
@@ -153,7 +171,22 @@ def test_make_verify_includes_lock_build_and_isolated_wheel_smoke() -> None:
     assert "uv lock --check" in makefile
     assert "uv run --isolated --no-project --refresh-package patchscope --with" in makefile
     assert "patchscope start --help" in makefile
+    assert "uv version --short" in makefile
+    assert "patchscope-$(PACKAGE_VERSION)-py3-none-any.whl" in makefile
     assert "- run: make package-smoke" in workflow
+
+
+def test_direct_dependencies_match_used_project_capabilities() -> None:
+    project = tomllib.loads((ROOT / "pyproject.toml").read_text())
+    lock = (ROOT / "uv.lock").read_text()
+    runtime = project["project"]["dependencies"]
+    development = project["dependency-groups"]["dev"]
+
+    assert not any(value.startswith("langchain==") for value in runtime)
+    assert any(value.startswith("langsmith") for value in runtime)
+    assert not any(value.startswith("httpx2") for value in development)
+    for unused_package in ("httpx2", "httpcore2", "langchain", "truststore"):
+        assert f'name = "{unused_package}"' not in lock
 
 
 def test_ci_uses_current_node24_action_releases() -> None:

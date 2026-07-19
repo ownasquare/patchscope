@@ -82,4 +82,7 @@ Markdown is suitable for a PR description or handoff. SARIF 2.1.0 can be consume
 
 ## Limits
 
-Defaults are 500,000 bytes per file, 2,000,000 bytes per review, 100 files, 20 seconds per analyzer, and 10 seconds per GitHub request. Configure them with `PATCHSCOPE_*` settings.
+Defaults are 500,000 bytes per file, 2,000,000 bytes per review, 100 files, 20 seconds per analyzer,
+and 10 seconds per GitHub request. Optional OpenAI synthesis has one 120,000-character total prompt
+ceiling and a 4,096-token completion ceiling. Prompt truncation is reported in AI metadata and does
+not remove deterministic findings. Configure these bounds with `PATCHSCOPE_*` settings.

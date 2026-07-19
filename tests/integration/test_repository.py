@@ -13,6 +13,7 @@ from patchscope.domain import (
     FindingCategory,
     FindingSeverity,
     FindingTriage,
+    PromptSectionUsage,
     ReviewRequest,
     ReviewResult,
     ReviewSourceKind,
@@ -102,6 +103,67 @@ def test_review_round_trip_and_result_replacement(repository: ReviewRepository) 
     replaced = repository.save_result(review_id, replacement)
     assert replaced.summary.total_findings == 1
     assert len(replaced.findings) == 1
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        AIMetadata(
+            mode="openai",
+            provider="openai",
+            model="gpt-5-mini",
+            summary="One evidence-backed addition.",
+            finding_count=3,
+            accepted_model_findings=1,
+            completion_token_limit=4_096,
+            prompt_char_limit=120_000,
+            prompt_chars=8_000,
+            prompt_sections={
+                "sources": PromptSectionUsage(
+                    original_chars=4_000,
+                    included_chars=4_000,
+                    prompt_chars=4_000,
+                )
+            },
+        ),
+        AIMetadata(
+            mode="offline_fallback",
+            provider="openai",
+            model="gpt-5-mini",
+            finding_count=2,
+            fallback_reason="AI synthesis was unavailable (TimeoutError).",
+            provider_error_type="TimeoutError",
+            completion_token_limit=4_096,
+            prompt_char_limit=4_000,
+            prompt_chars=4_000,
+            prompt_truncated=True,
+            prompt_sections={
+                "sources": PromptSectionUsage(
+                    original_chars=10_000,
+                    included_chars=2_000,
+                    prompt_chars=2_015,
+                    truncated=True,
+                )
+            },
+            warnings=(
+                "Provider prompt was truncated.",
+                "AI synthesis was unavailable (TimeoutError).",
+            ),
+        ),
+    ],
+    ids=("provider-success", "provider-fallback"),
+)
+def test_ai_metadata_round_trips_without_losing_prompt_or_fallback_state(
+    repository: ReviewRepository,
+    metadata: AIMetadata,
+) -> None:
+    review_id = repository.create_review(make_request())
+
+    stored = repository.save_result(review_id, ReviewResult(ai_metadata=metadata))
+    reloaded = repository.require_review(review_id)
+
+    assert stored.ai_metadata == metadata
+    assert reloaded.ai_metadata == metadata
 
 
 def test_list_reviews_is_stably_paginated(repository: ReviewRepository) -> None:

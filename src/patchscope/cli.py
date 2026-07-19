@@ -29,14 +29,35 @@ app = typer.Typer(
     pretty_exceptions_show_locals=False,
 )
 console = Console()
-UI_SECRET_ENV_KEYS = {
-    "DATABASE_URL",
-    "GITHUB_TOKEN",
-    "OPENAI_API_KEY",
-    "PATCHSCOPE_DATABASE_URL_OVERRIDE",
-    "PATCHSCOPE_GITHUB_TOKEN",
-    "PATCHSCOPE_OPENAI_API_KEY",
-}
+SAFE_RUNTIME_ENV_KEYS = frozenset(
+    {
+        "COMSPEC",
+        "CURL_CA_BUNDLE",
+        "HOME",
+        "HOMEDRIVE",
+        "HOMEPATH",
+        "LANG",
+        "LANGUAGE",
+        "LC_ALL",
+        "LC_CTYPE",
+        "PATH",
+        "PATHEXT",
+        "REQUESTS_CA_BUNDLE",
+        "SSL_CERT_DIR",
+        "SSL_CERT_FILE",
+        "SYSTEMROOT",
+        "TEMP",
+        "TMP",
+        "TMPDIR",
+        "USERPROFILE",
+        "VIRTUAL_ENV",
+        "WINDIR",
+    }
+)
+API_SETTINGS_ENV_KEYS = frozenset(
+    f"PATCHSCOPE_{field_name}".upper() for field_name in Settings.model_fields
+)
+UI_ENV_KEYS = frozenset({"PATCHSCOPE_API_URL"})
 
 
 def _version_callback(value: bool) -> None:
@@ -108,8 +129,27 @@ def _client_host(bind_host: str) -> str:
     return bind_host
 
 
+def _selected_environment(keys: frozenset[str]) -> dict[str, str]:
+    return {
+        normalized: value
+        for key, value in os.environ.items()
+        if (normalized := key.upper()) in keys
+    }
+
+
+def _runtime_environment() -> dict[str, str]:
+    return _selected_environment(SAFE_RUNTIME_ENV_KEYS)
+
+
+def _api_environment() -> dict[str, str]:
+    environment = _runtime_environment()
+    environment.update(_selected_environment(API_SETTINGS_ENV_KEYS))
+    return environment
+
+
 def _ui_environment(*, api_url: str | None = None) -> dict[str, str]:
-    environment = {key: value for key, value in os.environ.items() if key not in UI_SECRET_ENV_KEYS}
+    environment = _runtime_environment()
+    environment.update(_selected_environment(UI_ENV_KEYS))
     if api_url is not None:
         environment["PATCHSCOPE_API_URL"] = api_url
     return environment
@@ -138,7 +178,7 @@ def start(
         raise typer.BadParameter("API and workbench ports must be different", param_hint="port")
 
     child_processes: list[subprocess.Popen[bytes]] = []
-    api_environment = os.environ.copy()
+    api_environment = _api_environment()
     client_host = _client_host(host)
     ui_environment = _ui_environment(api_url=f"http://{client_host}:{api_port}")
 

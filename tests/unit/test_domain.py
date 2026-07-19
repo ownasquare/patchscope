@@ -2,11 +2,13 @@ import pytest
 from pydantic import ValidationError
 
 from patchscope.domain import (
+    AIMetadata,
     Finding,
     FindingCategory,
     FindingSeverity,
     FindingTriage,
     MergeRecommendation,
+    PromptSectionUsage,
     ReviewRequest,
     ReviewSummary,
     SourceFile,
@@ -98,3 +100,52 @@ def test_domain_models_are_immutable() -> None:
 
     with pytest.raises(ValidationError):
         finding.message = "changed"  # type: ignore[misc]
+
+
+def test_ai_metadata_preserves_provider_budget_and_fallback_evidence() -> None:
+    metadata = AIMetadata(
+        mode="offline_fallback",
+        provider="openai",
+        model="gpt-5-mini",
+        finding_count=3,
+        accepted_model_findings=0,
+        fallback_reason="AI synthesis was unavailable (TimeoutError).",
+        provider_error_type="TimeoutError",
+        completion_token_limit=4_096,
+        prompt_char_limit=4_000,
+        prompt_chars=4_000,
+        prompt_truncated=True,
+        prompt_sections={
+            "sources": PromptSectionUsage(
+                original_chars=10_000,
+                included_chars=2_000,
+                prompt_chars=2_015,
+                truncated=True,
+            )
+        },
+        warnings=("Provider prompt was truncated.", "AI synthesis was unavailable."),
+    )
+
+    assert metadata.mode == "offline_fallback"
+    assert metadata.prompt_sections["sources"].original_chars == 10_000
+    assert metadata.completion_token_limit == 4_096
+    assert metadata.fallback_reason is not None
+    assert metadata.warnings[0] == "Provider prompt was truncated."
+
+
+def test_ai_metadata_rejects_inconsistent_prompt_accounting() -> None:
+    with pytest.raises(ValidationError, match="prompt_chars"):
+        AIMetadata(prompt_char_limit=4_000, prompt_chars=4_001)
+
+    with pytest.raises(ValidationError, match="prompt_truncated"):
+        AIMetadata(
+            prompt_truncated=False,
+            prompt_sections={
+                "sources": PromptSectionUsage(
+                    original_chars=2,
+                    included_chars=1,
+                    prompt_chars=1,
+                    truncated=True,
+                )
+            },
+        )

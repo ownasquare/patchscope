@@ -50,7 +50,10 @@ async def test_fetch_pull_request_hydrates_supported_sources() -> None:
                     "title": "Safer checkout",
                     "user": {"login": "sam"},
                     "head": {"sha": "a" * 40, "ref": "secure-checkout"},
-                    "base": {"ref": "main"},
+                    "base": {
+                        "ref": "main",
+                        "repo": {"private": False, "visibility": "public"},
+                    },
                 },
             )
         if request.url.path.endswith("/pulls/7/files"):
@@ -111,7 +114,10 @@ async def test_fetch_pull_request_uses_patch_when_content_is_missing() -> None:
                     "title": "Delete old code",
                     "user": {"login": "sam"},
                     "head": {"sha": "b" * 40, "ref": "cleanup"},
-                    "base": {"ref": "main"},
+                    "base": {
+                        "ref": "main",
+                        "repo": {"private": False, "visibility": "public"},
+                    },
                 },
             )
         if request.url.path.endswith("/pulls/3/files"):
@@ -149,6 +155,48 @@ async def test_fetch_pull_request_reports_rate_limit() -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "base",
+    [
+        None,
+        {"ref": "main", "repo": {"private": True, "visibility": "private"}},
+        {"ref": "main"},
+        {"ref": "main", "repo": []},
+        {"ref": "main", "repo": {}},
+        {"ref": "main", "repo": {"private": "false"}},
+        {"ref": "main", "repo": {"private": 0}},
+        {"ref": "main", "repo": {"private": False, "visibility": "internal"}},
+        {"ref": "main", "repo": {"private": False, "visibility": 0}},
+    ],
+)
+async def test_fetch_pull_request_rejects_nonpublic_or_ambiguous_repository(
+    base: object,
+) -> None:
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request)
+        if request.url.path.endswith("/pulls/11"):
+            return httpx.Response(
+                200,
+                json={
+                    "title": "Hidden change",
+                    "head": {"sha": "d" * 40, "ref": "hidden"},
+                    "base": base,
+                },
+            )
+        raise AssertionError(f"Unexpected request after metadata: {request.url.path}")
+
+    with pytest.raises(IntakeError, match="public GitHub repositories"):
+        await GitHubClient(transport=httpx.MockTransport(handler)).fetch_pull_request(
+            "https://github.com/acme/shop/pull/11"
+        )
+
+    assert len(calls) == 1
+    assert calls[0].url.path.endswith("/pulls/11")
+
+
+@pytest.mark.asyncio
 async def test_file_pagination_fetches_a_sentinel_page_at_the_exact_limit() -> None:
     requested_pages: list[int] = []
 
@@ -159,7 +207,10 @@ async def test_file_pagination_fetches_a_sentinel_page_at_the_exact_limit() -> N
                 json={
                     "title": "Large change",
                     "head": {"sha": "c" * 40, "ref": "large"},
-                    "base": {"ref": "main"},
+                    "base": {
+                        "ref": "main",
+                        "repo": {"private": False, "visibility": "public"},
+                    },
                 },
             )
         if request.url.path.endswith("/pulls/9/files"):

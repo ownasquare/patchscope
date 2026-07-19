@@ -1,6 +1,11 @@
 from __future__ import annotations
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
+
+import pytest
+from langsmith import tracing_context as langsmith_tracing_context
 
 from patchscope.agent.model import EvidenceSynthesizer
 from patchscope.agent.workflow import ReviewWorkflow, WorkflowDependencies
@@ -85,3 +90,33 @@ def test_workflow_excludes_findings_outside_changed_pull_request_lines() -> None
     assert result["analyzer_runs"][0]["findings"] == []
     assert result["summary"]["recommendation"] == "approve"
     assert result["refactors"] == []
+
+
+def test_workflow_explicitly_disables_ambient_langsmith_tracing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tracing_states: list[bool | str | None] = []
+
+    @contextmanager
+    def recording_tracing_context(
+        *, enabled: bool | str | None = None, **_kwargs: object
+    ) -> Iterator[None]:
+        tracing_states.append(enabled)
+        with langsmith_tracing_context(enabled=enabled):
+            yield
+
+    monkeypatch.setenv("LANGSMITH_TRACING", "true")
+    monkeypatch.setenv("LANGCHAIN_TRACING_V2", "true")
+    monkeypatch.setattr("patchscope.agent.workflow.tracing_context", recording_tracing_context)
+    workflow = ReviewWorkflow(
+        WorkflowDependencies(
+            parser=Parser(),
+            analyzer_runner=Runner(),
+            refactor_engine=Refactorer(),
+            synthesizer=EvidenceSynthesizer(mode="offline"),
+        )
+    )
+
+    workflow.invoke(files=[Source("app.py", "eval(value)")], metadata={})
+
+    assert tracing_states == [False]

@@ -50,6 +50,8 @@ def build_service(settings: Settings) -> ReviewService:
                 mode=settings.ai_mode,
                 model_name=settings.openai_model,
                 api_key=secret,
+                max_prompt_chars=settings.openai_max_prompt_chars,
+                max_completion_tokens=settings.openai_max_completion_tokens,
             ),
         )
     )

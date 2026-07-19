@@ -39,6 +39,8 @@ def test_compose_forwards_documented_review_resource_controls() -> None:
 
     for setting in (
         "PATCHSCOPE_OPENAI_MODEL",
+        "PATCHSCOPE_OPENAI_MAX_PROMPT_CHARS",
+        "PATCHSCOPE_OPENAI_MAX_COMPLETION_TOKENS",
         "PATCHSCOPE_MAX_FILE_BYTES",
         "PATCHSCOPE_MAX_REVIEW_BYTES",
         "PATCHSCOPE_MAX_FILES",
@@ -49,6 +51,7 @@ def test_compose_forwards_documented_review_resource_controls() -> None:
 
     assert "PATCHSCOPE_API_HOST" not in compose
     assert "PATCHSCOPE_LOG_LEVEL" not in compose
+    assert "PATCHSCOPE_DATABASE_URL_OVERRIDE" not in compose
 
 
 def test_ci_starts_and_health_checks_the_built_compose_stack() -> None:

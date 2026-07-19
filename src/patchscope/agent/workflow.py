@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass, is_dataclass
 from typing import Any, cast
 
 from langgraph.graph import END, START, StateGraph
+from langsmith import tracing_context
 
 from patchscope.agent.model import EvidenceSynthesizer, Synthesizer, summarize_findings
 from patchscope.agent.state import ReviewState
@@ -40,17 +41,18 @@ class ReviewWorkflow:
         self.graph = builder.compile()
 
     def invoke(self, *, files: Sequence[Any], metadata: Mapping[str, Any]) -> ReviewState:
-        return cast(
-            ReviewState,
-            self.graph.invoke(
-                {
-                    "files": list(files),
-                    "metadata": dict(metadata),
-                    "stage_trace": [],
-                    "warnings": [],
-                }
-            ),
-        )
+        with tracing_context(enabled=False):
+            return cast(
+                ReviewState,
+                self.graph.invoke(
+                    {
+                        "files": list(files),
+                        "metadata": dict(metadata),
+                        "stage_trace": [],
+                        "warnings": [],
+                    }
+                ),
+            )
 
     def _parse(self, state: ReviewState) -> dict[str, Any]:
         summaries: list[dict[str, Any]] = []

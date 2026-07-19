@@ -30,6 +30,8 @@ def test_build_service_composes_dependencies_and_normalizes_blank_secrets(
         ai_mode="auto",
         openai_api_key=openai_key,
         github_token=github_token,
+        openai_max_prompt_chars=8_000,
+        openai_max_completion_tokens=512,
         analyzer_timeout_seconds=1,
         github_timeout_seconds=1,
         _env_file=None,
@@ -42,6 +44,8 @@ def test_build_service_composes_dependencies_and_normalizes_blank_secrets(
         synthesizer = service.workflow.dependencies.synthesizer
         assert isinstance(synthesizer, EvidenceSynthesizer)
         assert synthesizer.api_key == expected_secret
+        assert synthesizer.max_prompt_chars == 8_000
+        assert synthesizer.max_completion_tokens == 512
         assert isinstance(service.github_client, GitHubClient)
         assert ("Authorization" in service.github_client.headers) is authorization_configured
         assert service.ready() is True
