@@ -25,6 +25,7 @@ def test_public_project_files_are_present() -> None:
         "docs/api.md",
         "docs/assets/patchscope-workbench.svg",
         "docs/extending.md",
+        "docs/releases/v0.1.0.md",
         "docs/security.md",
         ".github/ISSUE_TEMPLATE/bug_report.yml",
         ".github/ISSUE_TEMPLATE/feature_request.yml",
@@ -51,6 +52,7 @@ def test_release_artifacts_preserve_streamlit_and_docker_context() -> None:
         "/docs/architecture.md",
         "/docs/assets",
         "/docs/extending.md",
+        "/docs/releases",
         "/docs/security.md",
     } <= sdist_includes
 

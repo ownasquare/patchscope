@@ -83,6 +83,7 @@ include = [
   "/docs/architecture.md",
   "/docs/assets",
   "/docs/extending.md",
+  "/docs/releases",
   "/docs/security.md",
   "/.dockerignore",
   "/.env.example",
